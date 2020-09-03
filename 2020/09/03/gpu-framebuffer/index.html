@@ -5,15 +5,31 @@
   
 
   
-  <title>小埃拉的博客</title>
+  <title>GPU Framebuffer Memory: Understanding Tiling(WIP) | 小埃拉的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="小埃拉的博客">
-<meta property="og:url" content="http://yusjoel.github.io/index.html">
+  <meta name="description" content="现代的图形硬件在描绘的操作过程中有大量的内存的带宽需求. 增加外部的内存带宽代价非常的昂贵, 因为需要增加额外的空间和能源, 而对于移动设备的渲染来说尤其困难. 这篇文章要讨论基于图块的渲染, 这种渲染方法在大多数的移动图形硬件上使用, 并且逐步地向桌面硬件发展. 立即模式光栅器传统的图形API给出的接口是将三角形按顺序提交, 然后GPU渲染器依次渲染各个三角形. 光栅化的过程如下图所示: 下面的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GPU Framebuffer Memory: Understanding Tiling(WIP)">
+<meta property="og:url" content="http://yusjoel.github.io/2020/09/03/gpu-framebuffer/index.html">
 <meta property="og:site_name" content="小埃拉的博客">
+<meta property="og:description" content="现代的图形硬件在描绘的操作过程中有大量的内存的带宽需求. 增加外部的内存带宽代价非常的昂贵, 因为需要增加额外的空间和能源, 而对于移动设备的渲染来说尤其困难. 这篇文章要讨论基于图块的渲染, 这种渲染方法在大多数的移动图形硬件上使用, 并且逐步地向桌面硬件发展. 立即模式光栅器传统的图形API给出的接口是将三角形按顺序提交, 然后GPU渲染器依次渲染各个三角形. 光栅化的过程如下图所示: 下面的">
 <meta property="og:locale">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_01.gif">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_03.svg">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_06.gif">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_07.gif">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_10.gif">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_12.gif">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_14.gif">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_16.svg">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_19.gif">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_21.gif">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_23.gif">
+<meta property="article:published_time" content="2020-09-03T02:43:09.000Z">
+<meta property="article:modified_time" content="2020-09-03T03:06:01.753Z">
 <meta property="article:author" content="Joel">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_01.gif">
   
     <link rel="alternate" href="/atom.xml" title="小埃拉的博客" type="application/atom+xml">
   
@@ -62,9 +78,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-gpu-framebuffer" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-gpu-framebuffer" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2020/09/03/gpu-framebuffer/" class="article-date">
   <time datetime="2020-09-03T02:43:09.000Z" itemprop="datePublished">2020-09-03</time>
@@ -77,8 +91,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/09/03/gpu-framebuffer/">GPU Framebuffer Memory: Understanding Tiling(WIP)</a>
+    <h1 class="article-title" itemprop="name">
+      GPU Framebuffer Memory: Understanding Tiling(WIP)
     </h1>
   
 
@@ -177,11 +191,9 @@
     </footer>
   </div>
   
-</article>
-
-
+    
   
-
+</article>
 
 </section>
         
