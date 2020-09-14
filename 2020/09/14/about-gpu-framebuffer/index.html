@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>GPU帧缓冲内存: 了解图块化 翻译后记(WIP) | 小埃拉的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="状态: 进行中, 完成Phong插值部分 Phong-interpolated surface normal使用Phong插值的表面法线, 现在很少有地方能看到这个术语了, 因为它的广泛应用已经被当成理所当然的事情. 这里就要说一些历史, 说到法线, 显然应该是只有一个面才有法线, 点是没有的, 早期的对一个三角面设置一个法线值, 那么计算渲染方程时有一个问题就是每一个三角面的颜色都是一样, 所以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GPU帧缓冲内存: 了解图块化 翻译后记(WIP)">
+<meta property="og:url" content="http://yusjoel.github.io/2020/09/14/about-gpu-framebuffer/index.html">
+<meta property="og:site_name" content="小埃拉的博客">
+<meta property="og:description" content="状态: 进行中, 完成Phong插值部分 Phong-interpolated surface normal使用Phong插值的表面法线, 现在很少有地方能看到这个术语了, 因为它的广泛应用已经被当成理所当然的事情. 这里就要说一些历史, 说到法线, 显然应该是只有一个面才有法线, 点是没有的, 早期的对一个三角面设置一个法线值, 那么计算渲染方程时有一个问题就是每一个三角面的颜色都是一样, 所以">
+<meta property="og:locale">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/normal_vector.png">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/D3D_Shading_Modes.png">
+<meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/Shading-Methods-Comparison.png">
+<meta property="article:published_time" content="2020-09-14T02:22:50.000Z">
+<meta property="article:modified_time" content="2020-09-14T03:36:58.873Z">
+<meta property="article:author" content="Joel">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yusjoel.github.io/gpu-framebuffer/images/normal_vector.png">
+  
+    <link rel="alternate" href="/atom.xml" title="小埃拉的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 5.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">小埃拉的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yusjoel.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-about-gpu-framebuffer" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/09/14/about-gpu-framebuffer/" class="article-date">
+  <time datetime="2020-09-14T02:22:50.000Z" itemprop="datePublished">2020-09-14</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      GPU帧缓冲内存: 了解图块化 翻译后记(WIP)
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>状态: 进行中, 完成Phong插值部分</p>
+<h1 id="Phong-interpolated-surface-normal"><a href="#Phong-interpolated-surface-normal" class="headerlink" title="Phong-interpolated surface normal"></a>Phong-interpolated surface normal</h1><p>使用Phong插值的表面法线, 现在很少有地方能看到这个术语了, 因为它的广泛应用已经被当成理所当然的事情.</p>
+<p>这里就要说一些历史, 说到法线, 显然应该是只有一个面才有法线, 点是没有的, 早期的对一个三角面设置一个法线值, 那么计算渲染方程时有一个问题就是每一个三角面的颜色都是一样, 所以这个着色方式也被叫做平面着色法(flat shade). </p>
+<p><img src="/gpu-framebuffer/images/normal_vector.png" alt="一个三角面一个法线的情况"></p>
+<p>图片来自: <a target="_blank" rel="noopener" href="http://learnwebgl.brown37.net/10_surface_properties/smooth_vertex_normals.html">Smooth “Phong” Shading</a></p>
+<p>那么显然在计算漫反射的时候, 平面着色法的效果就无法接受, 于是出现了高洛德着色法(<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Gouraud_shading">Gouraud shading</a>), 该方法对三角面的每个顶点设置法线值, 逐顶点的计算颜色, 最后使用双线性插值计算三角面内的像素颜色.</p>
+<p><img src="/gpu-framebuffer/images/D3D_Shading_Modes.png" alt="高洛德着色法的效果"></p>
+<p>图片来自: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Gouraud_shading">Gouraud shading</a></p>
+<p>裴祥风(Bùi Tường Phong)在1973年提出了Phong着色法(<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Phong_shading">Phong shading</a>). Phong着色法也叫作Phong插值(Phong interpolation), 或者法线向量插值着色法(Normal-vector interpolation shading), 也就是给每个顶点设置法线, 三角形内部点的法线使用线性插值进行计算. Phong着色法是对高洛德着色法的一个优化, 主要是处理使用了Phong反射模型后镜面反射部分的效果</p>
+<p><img src="/gpu-framebuffer/images/Shading-Methods-Comparison.png" alt="3个着色法的比较"></p>
+<p>图片来自: Intergraph Computer Systems</p>
+<p>其他参考文章:<br><a target="_blank" rel="noopener" href="https://hijiangtao.github.io/2019/09/19/Shading-Methods-Comparison/">Flat、Gouraud、Phong Shading 着色方法对比</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yusjoel.github.io/2020/09/14/about-gpu-framebuffer/" data-id="ckf1yz5o50000h0rq1hey9oyx" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2020/09/03/gpu-framebuffer/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">GPU帧缓冲内存: 了解图块化</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TBR/" rel="tag">TBR</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BF%BB%E8%AF%91/" rel="tag">翻译</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/GPU/" style="font-size: 10px;">GPU</a> <a href="/tags/TBR/" style="font-size: 10px;">TBR</a> <a href="/tags/%E7%BF%BB%E8%AF%91/" style="font-size: 10px;">翻译</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/09/">September 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/09/14/about-gpu-framebuffer/">GPU帧缓冲内存: 了解图块化 翻译后记(WIP)</a>
+          </li>
+        
+          <li>
+            <a href="/2020/09/03/gpu-framebuffer/">GPU帧缓冲内存: 了解图块化</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 Joel<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
