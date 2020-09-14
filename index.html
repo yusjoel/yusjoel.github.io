@@ -98,6 +98,7 @@
 <p><img src="/gpu-framebuffer/images/Shading-Methods-Comparison.png" alt="3个着色法的比较"></p>
 <p>图片来自: Intergraph Computer Systems</p>
 <p>其他参考文章:<br><a target="_blank" rel="noopener" href="https://hijiangtao.github.io/2019/09/19/Shading-Methods-Comparison/">Flat、Gouraud、Phong Shading 着色方法对比</a></p>
+<h1 id="buffer-vs-cache"><a href="#buffer-vs-cache" class="headerlink" title="buffer vs cache"></a>buffer vs cache</h1><h1 id="latency-vs-defer"><a href="#latency-vs-defer" class="headerlink" title="latency vs defer"></a>latency vs defer</h1><h1 id="thrash-the-cache"><a href="#thrash-the-cache" class="headerlink" title="thrash the cache"></a>thrash the cache</h1><h1 id="binning"><a href="#binning" class="headerlink" title="binning"></a>binning</h1><p>Sorting triangles into bins</p>
 
       
     </div>
@@ -135,7 +136,7 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p>原文: <a target="_blank" rel="noopener" href="https://developer.samsung.com/galaxy-gamedev/resources/articles/gpu-framebuffer.html">GPU Framebuffer Memory: Understanding Tiling</a></p>
-<p>现代的图形硬件在描绘的操作过程中有大量的内存的带宽需求. 增加外部的内存带宽代价非常的昂贵, 因为需要增加额外的空间和能源, 而对于移动设备的渲染来说尤其困难. 这篇文章要讨论基于图块的渲染, 这种渲染方法在大多数的移动图形硬件上使用, 并且逐步地向桌面硬件发展.</p>
+<p>现代的图形硬件在描绘的操作过程中有大量的内存的带宽需求. 增加外部的内存带宽代价非常的昂贵, 因为需要增加额外的空间和电量, 而对于移动设备的渲染来说尤其困难. 这篇文章要讨论基于图块的渲染, 这种渲染方法在大多数的移动图形硬件上使用, 并且逐步地向桌面硬件发展.</p>
 <h2 id="立即模式光栅器"><a href="#立即模式光栅器" class="headerlink" title="立即模式光栅器"></a>立即模式光栅器</h2><p>传统的图形API给出的接口是将三角形按顺序提交, 然后GPU渲染器依次渲染各个三角形. 光栅化的过程如下图所示:</p>
 <p><em>下面的图片, 包括之后所有的图片, 都是左侧显示颜色缓冲, 右侧显示深度缓冲</em></p>
 <p><img src="/gpu-framebuffer/images/tech_GPUFramebuffer_01.gif" alt="简单的立即模式渲染过程"></p>
@@ -179,9 +180,9 @@
 <p><em>下面这个例子演示了TBR下的延迟着色: 三角形先光栅化, 接着在图块内存下进行着色, 只有最终的着色结果, 颜色的RGB值会被写入到帧缓冲中.</em></p>
 <p><img src="/gpu-framebuffer/images/tech_GPUFramebuffer_23.gif" alt="TBR中的延迟渲染"></p>
 <h2 id="TBR的优点"><a href="#TBR的优点" class="headerlink" title="TBR的优点"></a>TBR的优点</h2><ul>
-<li><p>帧缓冲的内存带宽大大降低, 节省能源和提高速度.</p>
+<li><p>帧缓冲的内存带宽大大降低, 节省电量和提高速度.</p>
 </li>
-<li><p>移动设备的内存一般来说比桌面端慢, 能源也少, 带宽和CPU共享, 所以访问内存开销很大.</p>
+<li><p>移动设备的内存一般来说比桌面端慢, 电量也少, 带宽和CPU共享, 所以访问内存开销很大.</p>
 </li>
 <li><p>有了API的支持, 片外的内存需求可以减少, 比如可能就不再需要片外的深度缓冲了.</p>
 </li>
