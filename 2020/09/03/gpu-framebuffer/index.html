@@ -24,7 +24,7 @@
 <meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_21.gif">
 <meta property="og:image" content="http://yusjoel.github.io/gpu-framebuffer/images/tech_GPUFramebuffer_23.gif">
 <meta property="article:published_time" content="2020-09-03T02:43:09.000Z">
-<meta property="article:modified_time" content="2020-09-14T09:10:57.296Z">
+<meta property="article:modified_time" content="2020-09-14T09:42:03.442Z">
 <meta property="article:author" content="Joel">
 <meta property="article:tag" content="翻译">
 <meta property="article:tag" content="TBR">
@@ -132,7 +132,7 @@
 <p>尽管如此, 带宽的节省对于移动设备来说还是最重要的, 所以几乎所有的移动设备都使用了TBR. 甚至传统的桌面IMR供应商也在他们的新硬件中部分地使用基于图块的方法. 这意味着桌面和移动端都能在新的支持图块的API中收益, 如Vulkan Subpasses.</p>
 <p>由于我们要一次处理一个图块上的所有三角形, 所以不太必要去读取帧缓冲上的前一帧的数据, 可以把数据清空当成图块处理的一部分, 也可以避免一次读取的带宽消耗, 除非我们真的一定要读取前一帧的数据. 同样大多数情况也不需要对内存中的深度缓冲进行写入, 因为大多情况深度值都是在渲染过程中使用的, 并不需要在帧与帧之间保存.</p>
 <p>帧缓冲对外的数据往来只有每个图块的一次写入, 如果这个图块上没有三角形被渲染, 也需要用背景色来清空帧缓冲.</p>
-<h2 id="多重采样"><a href="#多重采样" class="headerlink" title="多重采样"></a>多重采样</h2><p>TBR提供了一个低带宽消耗的方法来实现反走样: 我们可以正常地渲染一个图块, 在写入内存时把对像素求平均作为操作的一部分. 这步对图块缓冲的降采样被称作解析. 当进行多重采样时(对应于超采样), 并不是所有的片上像素都被着色.</p>
+<h2 id="多重采样"><a href="#多重采样" class="headerlink" title="多重采样"></a>多重采样</h2><p>TBR提供了一个低带宽消耗的方法来实现反走样: 我们可以正常地渲染一个图块, 在写入内存时把对像素求平均作为操作的一部分. 这步对图块缓冲的降采样被称作解算. 当进行多重采样时(对应于超采样), 并不是所有的片上像素都被着色.</p>
 <p>如果图块缓冲是固定大小的, 那么反走样意味着图像需要分割为更多个图块, 从图块缓冲到帧缓冲的写入次数会更多, 但是总的写入量却是不受多重采样的级数的影响. 完整分辨率版本的帧缓存, 也就是降采样之前的那个版本, 是不需要写入到内存的, 只要对这个渲染对象没有其他操作. 这能节省大量的带宽, 对于简单的场景, 多重采样几乎是没有代价的.</p>
 <p><em>在下面这个动画中, 使用了2x2的反走样, 所以使得图块在帧缓冲中占据的面积变小了, 于是需要更多的步数. 光栅化后的几何体在图块内存中占用的空间会翻番, 但在写入到帧缓冲时会压缩. 深度缓冲只需要在片上即可, 不需要写入到内存, 所以整个帧缓冲只显示了颜色缓冲, 片上的深度值在图块处理完成后就会被抛弃.</em></p>
 <p><img src="/gpu-framebuffer/images/tech_GPUFramebuffer_19.gif" alt="TBR中的多重采样"></p>
@@ -190,7 +190,7 @@
 </ul>
 <p>在大多数情况下, 基于图块的GPU表现不会比立即模式的GPU差, 如果两者的硬件配置相当的话, 事实上, 有种GPU可以在这两个模式之间进行切换, 但是使用了错误的模式的话丧失TBR带来的优点.</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>TBR是现代GPU用于减小访问片外帧缓冲内存带宽的一种技术. 在移动端被广泛地使用, 因为外部内存的访问开销巨大, 渲染的需求则较低. 在桌面端GPU也开始部分使用TBR.</p>
-<p>Vulkan有特定的功能用于发挥TBR的最佳性能, 包括控制加载或是清空上一次的帧缓冲内容, 是写入还是抛弃附件内容, 控制附件的解析和次通道. OpenGL ES可以通过扩展来完成类似行为, 但并不通用. 要在当前乃至未来的GPU上获得最佳的性能, 必须要正确地使用这些API, 才能让TBR更有效地发挥作用.</p>
+<p>Vulkan有特定的功能用于发挥TBR的最佳性能, 包括控制加载或是清空上一次的帧缓冲内容, 是写入还是抛弃附件内容, 控制附件的解算和次通道. OpenGL ES可以通过扩展来完成类似行为, 但并不通用. 要在当前乃至未来的GPU上获得最佳的性能, 必须要正确地使用这些API, 才能让TBR更有效地发挥作用.</p>
 
       
     </div>
@@ -232,7 +232,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TBR/" rel="tag">TBR</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BF%BB%E8%AF%91/" rel="tag">翻译</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Shader/" rel="tag">Shader</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TBR/" rel="tag">TBR</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BF%BB%E8%AF%91/" rel="tag">翻译</a></li></ul>
     </div>
   </div>
 
@@ -242,7 +242,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/GPU/" style="font-size: 10px;">GPU</a> <a href="/tags/TBR/" style="font-size: 10px;">TBR</a> <a href="/tags/%E7%BF%BB%E8%AF%91/" style="font-size: 10px;">翻译</a>
+      <a href="/tags/GPU/" style="font-size: 20px;">GPU</a> <a href="/tags/Shader/" style="font-size: 10px;">Shader</a> <a href="/tags/TBR/" style="font-size: 20px;">TBR</a> <a href="/tags/%E7%BF%BB%E8%AF%91/" style="font-size: 10px;">翻译</a>
     </div>
   </div>
 
@@ -262,6 +262,14 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2020/09/21/parallax-map/">视差贴图(Parallax Map)</a>
+          </li>
+        
+          <li>
+            <a href="/2020/09/14/tbr-notes/">基于图块的渲染(WIP)</a>
+          </li>
         
           <li>
             <a href="/2020/09/14/about-gpu-framebuffer/">GPU帧缓冲内存: 了解图块化 翻译后记(WIP)</a>
